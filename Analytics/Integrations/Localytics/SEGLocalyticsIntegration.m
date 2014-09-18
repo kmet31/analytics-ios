@@ -40,9 +40,9 @@
     if (sessionTimeoutInterval != nil && [sessionTimeoutInterval floatValue] > 0) {
         [LocalyticsSession sharedLocalyticsSession].sessionTimeoutInterval = [sessionTimeoutInterval floatValue];
     }
-  
+
     [[LocalyticsSession shared] integratePushNotifications:UIRemoteNotificationTypeAlert];
-  
+
     SEGLog(@"LocalyticsIntegration initialized.");
 }
 
@@ -90,7 +90,6 @@
 - (void)track:(NSString *)event properties:(NSDictionary *)properties options:(NSDictionary *)options
 {
     // TODO add support for dimensions
-    // TODO add support for value
 
     // Backgrounded? Restart the session to add this event.
     BOOL isBackgrounded = [[UIApplication sharedApplication] applicationState] != UIApplicationStateActive;
@@ -98,7 +97,12 @@
         [[LocalyticsSession sharedLocalyticsSession] resume];
     }
 
-    [[LocalyticsSession sharedLocalyticsSession] tagEvent:event attributes:properties];
+    NSNumber *revenue = [SEGAnalyticsIntegration extractRevenue:properties];
+    if (revenue) {
+        [[LocalyticsSession sharedLocalyticsSession] tagEvent:event attributes:properties customerValueIncrease:revenue];
+    } else {
+        [[LocalyticsSession sharedLocalyticsSession] tagEvent:event attributes:properties];
+    }
 
     // Backgrounded? Close the session again after the event.
     if (isBackgrounded) {
